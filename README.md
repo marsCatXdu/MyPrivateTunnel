@@ -1,2 +1,4 @@
-# MaskassageCPP
-A p2p communication tool
+# MyPrivateTunnel
+UDP encrypted data transportion tool for geeks.    
+
+Use tiny-AES-c

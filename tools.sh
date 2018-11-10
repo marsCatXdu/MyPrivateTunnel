@@ -8,7 +8,7 @@ elif [ "$1" -eq 2 ];then
     # scp ./UdpServer.cpp root@Your server ip:/root/LinkingCPP/
 elif [ "$1" -eq 3 ];then
     echo "Complie UdpClient.cpp"
-    g++ -std=c++11 ./UdpClient.cpp -o ./client.out -I /usr/include/boost/ -lpthread -lboost_thread -lboost_system 
+    g++ -std=c++11 ./client/UdpClient.cpp -o ./client.out -I /usr/include/boost/ -lpthread -lboost_thread -lboost_system 
 else
     echo "需要输入参数"
     echo "1 -> SSH"

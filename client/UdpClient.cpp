@@ -34,6 +34,15 @@ public:
     void heartbeat() {      // heartbeat packet sender.
 
     }
+
+    string bufferToStr(vector<char> in) {
+        string str;
+        for(int i=0; i<in.size(); i++) {
+            if(in[i]!=0) str+=in[i];
+        }
+        return str;
+    }
+
 };
 
 class remoteEndpoint {
@@ -74,8 +83,9 @@ public:
 };
 
 int main() {
+    commonUtils cutils;                     // init common utils.
     string interchargeServer;
-    std::cout << "Input your intercharge server:";
+    std::cout << "Make sure your intercharge server is running forwarding program and destination port is open!\nInput your intercharge server: example: 1.2.3.4:1234 \n>>>";
     std::cin >> interchargeServer;          // it should be a string, format example: 1.2.3.4:1234
     remoteEndpoint iServerEp = remoteEndpoint(interchargeServer);
     send_ep = ip::udp::endpoint(ip::address::from_string(iServerEp.rmIp), iServerEp.rmPort);
@@ -83,16 +93,17 @@ int main() {
 
     sock.open(ip::udp::v4());               // start local socket
 
-    cout<<"Sending communication request to intercharge server\n";
+    cout<<"Sending transportion request to intercharge server\n";
     char buf[2];
     sock.send_to(buffer(buf), send_ep);     // send_ep is the target we send packet to
+    cout<<"Request sent.\n";
 
     vector<char> v(100, 0);
 
     cout<<"Waiting for responce........\n";
     sock.receive_from(buffer(v), send_ep);
     cout<<"Responce received. Ready for transportion\n";
-    remoteEndpoint rep(v);                  // get remote endpoint. ancient things, now a trash. reserve for preventing bugs
+//    remoteEndpoint rep(v);                  // get remote endpoint. ancient things, now a trash. reserve for preventing bugs
     //cout<<"Done.\nRemote endpoint is "<<&v[0]<<endl;    // Get remote endpoint
 
     for(; ; ) {

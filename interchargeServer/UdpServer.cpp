@@ -41,18 +41,33 @@ int main() {
     char buf[2];
     char buf2[2];
 
+    ip::udp::endpoint ep;       // first incomming client
+    ip::udp::endpoint ep2;      // second incomming client
+/**
+ * @brief: process incomming requests.(say hello to each other)
+ * @TODO: Make it like a handshake
+*/
+    sock.receive_from(buffer(buf) ,ep, 0);      // ep1 info
+    targetEndpoint tea(ep.address().to_string(), boost::lexical_cast<string>(ep.port()));
+
+    sock.receive_from(buffer(buf2) ,ep2, 0);    // ep2 info
+    targetEndpoint teb(ep2.address().to_string(), boost::lexical_cast<string>(ep2.port()));
+
+    sock.send_to(buffer(tea.tgtIp+":"+tea.tgtProt), ep2);
+    sock.send_to(buffer(teb.tgtIp+":"+teb.tgtProt), ep);
+// hello end.
+
+/**
+ * @brief: forwarding working loop
+ * @TODO: make it useable
+*/
     for(; ; ) {
-        ip::udp::endpoint ep;
-        ip::udp::endpoint ep2;
+        char m_buf[512], m_buf2[512];
+        sock.receive_from(buffer(m_buf) ,ep);
+        sock.receive_from(buffer(m_buf2) ,ep2);
 
-        sock.receive_from(buffer(buf) ,ep, 0);      // ep1 info
-        targetEndpoint tea(ep.address().to_string(), boost::lexical_cast<string>(ep.port()));
-
-        sock.receive_from(buffer(buf2) ,ep2, 0);    // ep2 info
-        targetEndpoint teb(ep2.address().to_string(), boost::lexical_cast<string>(ep2.port()));
-
-        sock.send_to(buffer(tea.tgtIp+":"+tea.tgtProt), ep2);
-        sock.send_to(buffer(teb.tgtIp+":"+teb.tgtProt), ep);
+        sock.send_to(buffer(m_buf), ep2);
+        sock.send_to(buffer(m_buf2), ep);
     }
 
     return 0;

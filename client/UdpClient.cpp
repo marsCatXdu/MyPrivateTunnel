@@ -6,6 +6,10 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -28,6 +32,102 @@ void listenThread() {       // refresh after heard something
     std::cout<<"Remote: "<<v[0];
     listenThread();
 }
+
+enum class WorkerState {
+    Starting,
+    Started,
+    Stopping,
+    Stopped,
+    Killing
+};
+
+class Worker {
+public:
+    Worker() {}
+    void Worker::startWorking() {
+        std::unique_lock<std::mutex> l(x_work);
+        if(m_work) {
+            WorkerState ex = WorkerState::Stopped;
+            m_state.compare_exchange_strong(ex, WorkerState::Starting);
+            m_state_notifier.notify_all();
+        } else {
+            m_state = WorkerState::Starting;
+            m_state_notifier.notify_all();
+            m_work.reset(new thread([&](){
+                while(m_state!=WorkerState::Killing) {
+                    WorkerState ex = WorkerState::Starting;
+                    {
+                        unique_lock<mutex> l(x_work);
+                        m_state = WorkerState::Started;
+                    }
+                    m_state_notifier.notify_all();
+
+                    try
+                    {
+                        startedWorking();
+                        workLoop();
+                        doneWorking();
+                    }
+                    catch (std::exception const& _e)
+                    {
+                        std::cout << "Exception thrown in Worker thread: " << _e.what();
+                    }
+
+                    {
+                        // the condition variable-related lock
+                        unique_lock<mutex> l(x_work);
+                        ex = m_state.exchange(WorkerState::Stopped);
+    //					cnote << "State: Stopped: Thread was" << (unsigned)ex;
+                        if (ex == WorkerState::Killing || ex == WorkerState::Starting)
+                            m_state.exchange(ex);
+                    }
+                    m_state_notifier.notify_all();
+    //				cnote << "Waiting until not Stopped...";
+
+                    {
+                        unique_lock<mutex> l(x_work);
+                        while (m_state == WorkerState::Stopped)
+                            m_state_notifier.wait(l);
+                    }
+
+                }
+            }));
+        }
+    }
+
+    void Worker::workLoop()
+    {
+        while (m_state == WorkerState::Started)
+        {
+            if (m_idleWaitMs)
+                this_thread::sleep_for(chrono::milliseconds(m_idleWaitMs));
+            doWork();
+        }
+    }
+
+	virtual void startedWorking() {}
+    virtual void doWork() {}
+	virtual void workLoop();
+	virtual void doneWorking() {}
+
+private:
+	std::string m_name;
+
+    unsigned m_idleWaitMs = 0;
+    
+    mutable std::mutex x_work;
+    std::unique_ptr<std::thread> m_work;    // working thread
+    mutable std::condition_variable m_state_notifier;
+    std::atomic<WorkerState> m_state = {WorkerState::Starting};
+    bool workingState = false;
+};
+
+class MptListener: public Worker {
+public:
+    MptListener() {}
+private:
+
+};
 
 class commonUtils {
 public:

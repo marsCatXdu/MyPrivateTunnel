@@ -32,7 +32,7 @@ void listenThread() {       // refresh after heard something
     std::cout<<"Remote: "<<v[0];
     listenThread();
 }
-
+/*
 enum class WorkerState {
     Starting,
     Started,
@@ -128,7 +128,7 @@ public:
 private:
 
 };
-
+*/
 class commonUtils {
 public:
     void heartbeat() {      // heartbeat packet sender.
@@ -207,13 +207,14 @@ int main() {
     //cout<<"Done.\nRemote endpoint is "<<&v[0]<<endl;    // Get remote endpoint
 
     for(; ; ) {
-        thread listenTh(listenThread);
-        listenTh.detach();
         string tmp;
+        char recv_buff[1024]={0};
         cout << "input your text to send: ";
         cin >> tmp;
         if(tmp=="EXIT") break;
         sock.send_to(buffer(tmp), send_ep);     // I think it wont't pass compile.... no test today, i need to do other work now
+        sock.receive_from(buffer(recv_buff, 1024), send_ep);  // listening
+        std::cout<<"Remote: "<<recv_buff<<std::endl;
     }
 /*
     for(int i=0; i<1000; i++) {

@@ -32,7 +32,7 @@ void listenThread() {       // refresh after heard something
     std::cout<<"Remote: "<<v[0];
     listenThread();
 }
-/*
+
 enum class WorkerState {
     Starting,
     Started,
@@ -43,8 +43,8 @@ enum class WorkerState {
 
 class Worker {
 public:
-    Worker() {}
-    void Worker::startWorking() {
+    Worker(std::string const& _name = "anon") {}
+    void startWorking() {                   // part of utility for worker
         std::unique_lock<std::mutex> l(x_work);
         if(m_work) {
             WorkerState ex = WorkerState::Stopped;
@@ -94,8 +94,14 @@ public:
             }));
         }
     }
+    // 'std::lock_guard<std::mutex>' named Guard in aleth
+	bool isWorking() const { std::lock_guard<std::mutex> l(x_work); return m_state == WorkerState::Started; }
 
-    void Worker::workLoop()
+    void stopWorking() {}
+
+    void terminate() {}
+
+    void workLoop()                 // part of utility for worker
     {
         while (m_state == WorkerState::Started)
         {
@@ -105,9 +111,10 @@ public:
         }
     }
 
-	virtual void startedWorking() {}
-    virtual void doWork() {}
-	virtual void workLoop();
+    void startWorking();                // 基类中已经实现的函数这么声明，这个函数不需要子类再去实现，子类不用再声明一遍直接调用即可
+	virtual void startedWorking() {}    
+    virtual void doWork() {}            // 声明并在基类中调用但基类没有实现的虚函数，声明使用花括号
+	// virtual void workLoop();     这样应该是先定义在.h中然后再实现的，需要分开似乎？
 	virtual void doneWorking() {}
 
 private:
@@ -122,13 +129,23 @@ private:
     bool workingState = false;
 };
 
-class MptListener: public Worker {
+class MptListener: public Worker {  // listener thread
 public:
-    MptListener() {}
+    MptListener():Worker("MListener") {}
+    void start() {
+        startWorking();
+    }
 private:
 
+    virtual void doWork();
+    virtual void doneWorking();
 };
-*/
+
+void MptListener::doWork() {
+
+}
+
+
 class commonUtils {
 public:
     void heartbeat() {      // heartbeat packet sender.

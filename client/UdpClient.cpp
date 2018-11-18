@@ -33,6 +33,8 @@ void listenThread() {       // refresh after heard something
     listenThread();
 }
 
+
+//---------------------------------Worker--------------------------------
 enum class WorkerState {
     Starting,
     Started,
@@ -43,7 +45,9 @@ enum class WorkerState {
 
 class Worker {
 public:
-    Worker(std::string const& _name = "anon") {}
+    Worker(std::string const& _name = "anon") {
+        std::cout<<"Worker constructor called\n";
+    }
     void startWorking() {                   // part of utility for worker
         std::unique_lock<std::mutex> l(x_work);
         if(m_work) {
@@ -105,16 +109,17 @@ public:
     {
         while (m_state == WorkerState::Started)
         {
-            if (m_idleWaitMs)
-                this_thread::sleep_for(chrono::milliseconds(m_idleWaitMs));
+            //if (m_idleWaitMs)
+            //    this_thread::sleep_for(chrono::milliseconds(m_idleWaitMs));
+            this_thread::sleep_for(chrono::milliseconds(100));
             doWork();
         }
     }
 
-    void startWorking();                // 基类中已经实现的函数这么声明，这个函数不需要子类再去实现，子类不用再声明一遍直接调用即可
+    // void startWorking();                // 基类中已经实现的函数这么声明，这个函数不需要子类再去实现，子类不用再声明一遍直接调用即可
 	virtual void startedWorking() {}    
     virtual void doWork() {}            // 声明并在基类中调用但基类没有实现的虚函数，声明使用花括号
-	// virtual void workLoop();     这样应该是先定义在.h中然后再实现的，需要分开似乎？
+	// virtual void workLoop();     这样应该是先定义在.h中然后再实现的，需要分开
 	virtual void doneWorking() {}
 
 private:
@@ -128,22 +133,34 @@ private:
     std::atomic<WorkerState> m_state = {WorkerState::Starting};
     bool workingState = false;
 };
+//---------------------------------Worker--------------------------------
 
+
+
+//---------------------------------MptListener--------------------------------
 class MptListener: public Worker {  // listener thread
 public:
-    MptListener():Worker("MListener") {}
+    MptListener() {         // 会先使用基类的默认构造器，然后再走子类构造器
+        std::cout<<"MptListener constructor called\n";
+    }
     void start() {
         startWorking();
     }
 private:
-
     virtual void doWork();
     virtual void doneWorking();
 };
 
 void MptListener::doWork() {
+    char recv_buff[1024]={0};
+    sock.receive_from(buffer(recv_buff, 1024), send_ep);  // listening
+    std::cout<<"Remote: "<<recv_buff<<std::endl;
+}
+
+void MptListener::doneWorking() {
 
 }
+//---------------------------------MptListener--------------------------------
 
 
 class commonUtils {
@@ -200,6 +217,8 @@ public:
 };
 
 int main() {
+    MptListener m_listener;
+
     commonUtils cutils;                     // init common utils.
     string interchargeServer;
     std::cout << "Make sure your intercharge server is running forwarding program and destination port is open!\nInput your intercharge server: example: 1.2.3.4:1234 \n>>>";
@@ -223,15 +242,15 @@ int main() {
 //    remoteEndpoint rep(v);                  // get remote endpoint. ancient things, now a trash. reserve for preventing bugs
     //cout<<"Done.\nRemote endpoint is "<<&v[0]<<endl;    // Get remote endpoint
 
+    m_listener.start();
+
     for(; ; ) {
         string tmp;
-        char recv_buff[1024]={0};
-        cout << "input your text to send: ";
+        cout << "input your text to send: \n";
         cin >> tmp;
         if(tmp=="EXIT") break;
         sock.send_to(buffer(tmp), send_ep);     // I think it wont't pass compile.... no test today, i need to do other work now
-        sock.receive_from(buffer(recv_buff, 1024), send_ep);  // listening
-        std::cout<<"Remote: "<<recv_buff<<std::endl;
+
     }
 /*
     for(int i=0; i<1000; i++) {

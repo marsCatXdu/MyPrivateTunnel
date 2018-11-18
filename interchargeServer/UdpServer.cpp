@@ -62,12 +62,19 @@ int main() {
  * @TODO: make it useable
 */
     for(; ; ) {
-        char m_buf[512], m_buf2[512];
-        sock.receive_from(buffer(m_buf) ,ep);
-        sock.receive_from(buffer(m_buf2) ,ep2);
-
-        sock.send_to(buffer(m_buf), ep2);
-        sock.send_to(buffer(m_buf2), ep);
+        char m_buf[1024]={0}, m_buf2[1024]={0};
+        if(sock.receive_from(buffer(m_buf) ,ep)) {
+            std::cout<<"Hear from ep, Sending to ep2\n";
+            sock.send_to(buffer(m_buf), ep2);
+            m_buf[1024]={0};
+            m_buf2[1024]={0};
+        }
+        if(sock.receive_from(buffer(m_buf2) ,ep2)) {
+            std::cout<<"Hear from ep2, Sending to ep\n";
+            sock.send_to(buffer(m_buf2), ep);
+            m_buf[1024]={0};
+            m_buf2[1024]={0};
+        }
     }
 
     return 0;

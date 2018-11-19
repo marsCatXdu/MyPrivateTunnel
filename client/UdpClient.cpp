@@ -25,15 +25,6 @@ ip::udp::socket sock(io);           // global socket for communications
 ip::udp::endpoint recv_ep;          // the endpoint we are listening on
 ip::udp::endpoint send_ep2;
 
-void listenThread() {       // refresh after heard something
-    vector<char> v;
-    cout<<"Listening thread created.\n";
-    sock.receive_from(buffer(v), recv_ep);  // listening
-    std::cout<<"Remote: "<<v[0];
-    listenThread();
-}
-
-
 //---------------------------------Worker--------------------------------
 enum class WorkerState {
     Starting,
@@ -252,26 +243,6 @@ int main() {
         sock.send_to(buffer(tmp), send_ep);     // I think it wont't pass compile.... no test today, i need to do other work now
 
     }
-/*
-    for(int i=0; i<1000; i++) {
-        cout<<"Sending traverse packet "<<i<<endl;
-        send_ep2=ip::udp::endpoint(ip::address::from_string(rep.rmIp), rep.rmPort);
-        sock.send_to(buffer(buf), send_ep2);
-        vector<char> v2(100, 0);
-        thread listenTh(listenThread);
-        listenTh.detach();
-        //listenThread();
-        usleep(10000);
-    }
-    usleep(5000000);
-*/
-/*  ancient codes...
-
-    vector<char> v2(100, 0);
-    cout<<"Listening.\n";
-    sock.receive_from(buffer(v2), recv_ep);
-    cout<<"RECEIVED!.\n";
-    cout<<v2[0]<<endl<<"from "<<recv_ep.address()<<":"<<recv_ep.port();
-*/    
+    
     return 0;
 }

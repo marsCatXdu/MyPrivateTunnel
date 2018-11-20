@@ -135,7 +135,7 @@ private:
 class MptListener: public Worker {  // listener thread
 public:
     MptListener(ip::udp::endpoint _ep, int _id): epListening(_ep), epId(_id) {         // 会先使用基类的默认构造器，然后再走子类构造器
-        std::cout<<"MptListener constructor called\n";
+        std::cout<<"MptListener constructor called. epId="<<this->epId<<std::endl;
     }
 
     void start() {
@@ -146,7 +146,7 @@ private:
     virtual void doneWorking();
 
     ip::udp::endpoint epListening;
-    int epId;
+    int epId=0;
 };
 
 void MptListener::doWork() {
@@ -154,11 +154,11 @@ void MptListener::doWork() {
         std::cout<<"Hearing\n";
         sock.receive_from(buffer(m_buf) ,epListening);
         if(epId==1) {
-            std::cout<<"Heard from ep_1, Forwarding to ep_2.\n";
+            std::cout<<"Heard from ep_1, Forwarding to ep_2. epId is:"<<epId<<std::endl;
             sock.send_to(buffer(m_buf), ep2);
             m_buf[1024]={0};
-        } else {
-            std::cout<<"Heard from ep_2, Forwarding to ep_1.\n";
+        } else if(epId==2) {
+            std::cout<<"Heard from ep_2, Forwarding to ep_1. epId is:"<<epId<<std::endl;
             sock.send_to(buffer(m_buf), ep);
             m_buf[1024]={0};
         }
@@ -217,6 +217,8 @@ int main() {
     lisa.start();
     lisb.start();
     for(; ; ) {
+        int a;
+        /*
         char m_buf[1024]={0}, m_buf2[1024]={0};
         if(sock.receive_from(buffer(m_buf) ,ep)) {
             std::cout<<"Hear from ep, Sending to ep2\n";
@@ -230,6 +232,8 @@ int main() {
             m_buf[1024]={0};
             m_buf2[1024]={0};
         }
+        */
+        std::cin>>a;
     }
 
     return 0;
